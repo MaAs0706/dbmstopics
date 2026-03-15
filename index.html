@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DBMS Study Guide – Module 4 + Transaction Management</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e2a;
+    --card: #1e2232;
+    --card2: #242840;
+    --border: #2d3350;
+    --accent1: #7c6af7;
+    --accent2: #38d9c0;
+    --accent3: #f59e3a;
+    --accent4: #f06a6a;
+    --accent5: #5bc4ff;
+    --text: #e8eaf6;
+    --text2: #9ca3c4;
+    --text3: #5d6490;
+    --green: #4ade80;
+    --pink: #f472b6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.75;
+    font-size: 15px;
+  }
+
+  /* HERO */
+  .hero {
+    background: linear-gradient(135deg, #0d0f14 0%, #171a2e 50%, #0d1220 100%);
+    padding: 56px 40px 48px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(124,106,247,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px; left: 30%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(56,217,192,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(124,106,247,0.15);
+    border: 1px solid rgba(124,106,247,0.4);
+    color: #a599ff;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-size: 36px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #e8eaf6 30%, #a599ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.25;
+    margin-bottom: 12px;
+  }
+  .hero p {
+    color: var(--text2);
+    font-size: 15px;
+    max-width: 600px;
+    margin-bottom: 28px;
+  }
+  .topic-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .pill {
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+  }
+  .pill:hover { transform: translateY(-1px); }
+  .pill-purple { background: rgba(124,106,247,0.1); border-color: rgba(124,106,247,0.5); color: #a599ff; }
+  .pill-teal   { background: rgba(56,217,192,0.1);  border-color: rgba(56,217,192,0.5);  color: #38d9c0; }
+  .pill-amber  { background: rgba(245,158,58,0.1);  border-color: rgba(245,158,58,0.5);  color: #f59e3a; }
+  .pill-red    { background: rgba(240,106,106,0.1); border-color: rgba(240,106,106,0.5); color: #f06a6a; }
+  .pill-blue   { background: rgba(91,196,255,0.1);  border-color: rgba(91,196,255,0.5);  color: #5bc4ff; }
+  .pill-green  { background: rgba(74,222,128,0.1);  border-color: rgba(74,222,128,0.5);  color: #4ade80; }
+
+  /* LAYOUT */
+  .container { max-width: 900px; margin: 0 auto; padding: 0 28px 80px; }
+
+  /* SECTION */
+  .section {
+    margin-top: 52px;
+  }
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-num {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .num-purple { background: rgba(124,106,247,0.2); color: #a599ff; border: 1px solid rgba(124,106,247,0.4); }
+  .num-teal   { background: rgba(56,217,192,0.2);  color: #38d9c0; border: 1px solid rgba(56,217,192,0.4); }
+  .num-amber  { background: rgba(245,158,58,0.2);  color: #f59e3a; border: 1px solid rgba(245,158,58,0.4); }
+  .num-red    { background: rgba(240,106,106,0.2); color: #f06a6a; border: 1px solid rgba(240,106,106,0.4); }
+  .num-blue   { background: rgba(91,196,255,0.2);  color: #5bc4ff; border: 1px solid rgba(91,196,255,0.4); }
+  .num-green  { background: rgba(74,222,128,0.2);  color: #4ade80; border: 1px solid rgba(74,222,128,0.4); }
+  .section-title { font-size: 22px; font-weight: 700; color: var(--text); }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* DEFINITION BOXES */
+  .def-box {
+    background: var(--card2);
+    border-left: 3px solid var(--accent1);
+    border-radius: 0 10px 10px 0;
+    padding: 14px 18px;
+    margin: 14px 0;
+    font-size: 14px;
+  }
+  .def-box.teal  { border-left-color: var(--accent2); }
+  .def-box.amber { border-left-color: var(--accent3); }
+  .def-box.red   { border-left-color: var(--accent4); }
+  .def-box.blue  { border-left-color: var(--accent5); }
+  .def-box.green { border-left-color: var(--green); }
+  .def-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    color: var(--text2);
+  }
+
+  /* CODE / FORMULA */
+  .formula {
+    font-family: 'IBM Plex Mono', monospace;
+    background: rgba(124,106,247,0.12);
+    border: 1px solid rgba(124,106,247,0.3);
+    border-radius: 6px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: #c4bcff;
+    margin: 10px 0;
+    display: block;
+    overflow-x: auto;
+    white-space: pre;
+  }
+  .formula.teal  { background: rgba(56,217,192,0.1);  border-color: rgba(56,217,192,0.3);  color: #7eead8; }
+  .formula.amber { background: rgba(245,158,58,0.1);  border-color: rgba(245,158,58,0.3);  color: #fbbf6a; }
+  .formula.red   { background: rgba(240,106,106,0.1); border-color: rgba(240,106,106,0.3); color: #f9a0a0; }
+
+  /* EXAMPLE BOXES */
+  .example {
+    background: linear-gradient(135deg, rgba(56,217,192,0.06), rgba(56,217,192,0.02));
+    border: 1px solid rgba(56,217,192,0.25);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 14px 0;
+  }
+  .example-head {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* TABLES */
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+    margin: 14px 0;
+  }
+  .tbl th {
+    background: var(--card2);
+    color: var(--text2);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .tbl td {
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(45,51,80,0.5);
+    vertical-align: top;
+  }
+  .tbl tr:last-child td { border-bottom: none; }
+  .tbl tr:hover td { background: rgba(255,255,255,0.02); }
+  .tbl code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: #c4bcff;
+  }
+
+  /* AXIOMS GRID */
+  .axiom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .axiom-card {
+    background: var(--card2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .axiom-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--accent1);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .axiom-rule {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: #c4bcff;
+    margin-bottom: 6px;
+  }
+  .axiom-eg { font-size: 13px; color: var(--text2); }
+
+  /* NF STEPS */
+  .nf-flow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 16px 0;
+  }
+  .nf-box {
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  .nf-arrow { color: var(--text3); font-size: 20px; }
+
+  /* ALERT BOXES */
+  .alert {
+    display: flex;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 10px;
+    margin: 14px 0;
+    font-size: 14px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert-important { background: rgba(245,158,58,0.1); border: 1px solid rgba(245,158,58,0.3); }
+  .alert-tip       { background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.25); }
+  .alert-warn      { background: rgba(240,106,106,0.1); border: 1px solid rgba(240,106,106,0.25); }
+
+  /* LISTS */
+  ul.styled, ol.styled { padding-left: 20px; margin: 10px 0; }
+  ul.styled li, ol.styled li { margin-bottom: 7px; color: var(--text2); font-size: 14px; }
+  ul.styled li strong, ol.styled li strong { color: var(--text); }
+
+  /* HIGHLIGHT INLINE */
+  .hl { color: var(--accent1); font-weight: 600; }
+  .hl2 { color: var(--accent2); font-weight: 600; }
+  .hl3 { color: var(--accent3); font-weight: 600; }
+  .hl4 { color: var(--accent4); font-weight: 600; }
+  .hl5 { color: var(--accent5); font-weight: 600; }
+  .hlg { color: var(--green); font-weight: 600; }
+
+  /* STEPS */
+  .steps { margin: 14px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: rgba(124,106,247,0.2);
+    border: 1px solid rgba(124,106,247,0.5);
+    color: #a599ff;
+    font-size: 12px;
+    font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .step-body { font-size: 14px; color: var(--text2); }
+  .step-body strong { color: var(--text); }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .badge-v  { background: rgba(74,222,128,0.15); color: #4ade80; }
+  .badge-x  { background: rgba(240,106,106,0.15); color: #f06a6a; }
+  .badge-key { background: rgba(124,106,247,0.15); color: #a599ff; }
+
+  /* KEY-VALUE STORE SPECIAL */
+  .kv-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin: 14px 0;
+  }
+  .kv-card {
+    background: var(--card2);
+    border-radius: 10px;
+    padding: 16px;
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+  .kv-icon { font-size: 28px; margin-bottom: 8px; }
+  .kv-name { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .kv-desc { font-size: 12px; color: var(--text2); }
+
+  /* LOCK TABLE */
+  .lock-matrix { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; text-align: center; }
+  .lock-matrix th, .lock-matrix td { border: 1px solid var(--border); padding: 9px 12px; }
+  .lock-matrix th { background: var(--card2); color: var(--text2); font-size: 11px; text-transform: uppercase; }
+  .lock-matrix .compat  { color: #4ade80; font-weight: 700; }
+  .lock-matrix .incompat { color: #f06a6a; font-weight: 700; }
+
+  /* TOC */
+  .toc { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 24px 0 0; }
+  .toc-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px;
+    text-decoration: none; color: var(--text2);
+    font-size: 13px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .toc-item:hover { border-color: var(--accent1); color: var(--text); background: var(--card2); transform: translateX(3px); }
+  .toc-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 36px 20px 32px; }
+    .hero h1 { font-size: 26px; }
+    .container { padding: 0 16px 60px; }
+    .axiom-grid { grid-template-columns: 1fr; }
+    .toc { grid-template-columns: 1fr; }
+  }
+
+  p { color: var(--text2); font-size: 14px; margin-bottom: 10px; }
+  p strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">DBMS Complete Study Guide</div>
+  <h1>Database Management<br>Systems — Exam Prep</h1>
+  <p>Module 4 (Functional Dependency → Key-Value Store) + Transaction Management up to Locking. Everything you need, nothing you don't.</p>
+  <div class="topic-pills">
+    <a href="#fd" class="pill pill-purple">Functional Dependency</a>
+    <a href="#armstrong" class="pill pill-teal">Armstrong's Axioms</a>
+    <a href="#closure" class="pill pill-amber">Closures & Equivalence</a>
+    <a href="#minimal" class="pill pill-red">Minimal Cover</a>
+    <a href="#nf" class="pill pill-blue">Normal Forms 1–BCNF</a>
+    <a href="#keys" class="pill pill-green">Keys & Decomposition</a>
+    <a href="#txn" class="pill pill-purple">Transactions</a>
+    <a href="#locks" class="pill pill-teal">Locking</a>
+    <a href="#nosql" class="pill pill-amber">NoSQL & Key-Value Store ⭐</a>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 1 — FUNCTIONAL DEPENDENCY
+═══════════════════════════════════════════════ -->
+<div class="section" id="fd">
+  <div class="section-header">
+    <div class="section-num num-purple">01</div>
+    <div class="section-title">Functional Dependency</div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Definition</div>
+    A <strong>functional dependency</strong> X → Y means: for any two tuples t1, t2 in relation R, if t1[X] = t2[X] then t1[Y] = t2[Y].<br>
+    <em style="color:var(--text3);font-size:13px;">"Same value in X always implies same value in Y"</em>
+  </div>
+
+  <div class="axiom-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="axiom-card">
+      <div class="axiom-name">Determinant</div>
+      <div class="axiom-rule">X in  X → Y</div>
+      <div class="axiom-eg">The left-hand side (X) that determines</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">Dependent</div>
+      <div class="axiom-rule">Y in  X → Y</div>
+      <div class="axiom-eg">The right-hand side (Y) that is determined</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">Types of Functional Dependency</div>
+    <table class="tbl">
+      <tr>
+        <th>Type</th><th>Condition</th><th>Example</th>
+      </tr>
+      <tr>
+        <td><strong>Trivial FD</strong></td>
+        <td>Y ⊆ X (Y is a subset of X)</td>
+        <td><code>RollNo,Name → Name</code></td>
+      </tr>
+      <tr>
+        <td><strong>Non-Trivial FD</strong></td>
+        <td>X ∩ Y = Φ (nothing in common)</td>
+        <td><code>RollNo → Name</code></td>
+      </tr>
+      <tr>
+        <td><strong>Partial FD</strong></td>
+        <td>Proper subset of CK → NPA</td>
+        <td><code>Ssn → Ename</code> in (Ssn,Pnum) CK</td>
+      </tr>
+      <tr>
+        <td><strong>Full FD</strong></td>
+        <td>Removing any LHS attr breaks dependency</td>
+        <td><code>{Ssn,Pnum} → Hours</code></td>
+      </tr>
+      <tr>
+        <td><strong>Transitive FD</strong></td>
+        <td>NPA → NPA (chain through non-prime attrs)</td>
+        <td><code>B → C</code> where A→B (A is CK)</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="alert alert-important">
+    <span class="alert-icon">⚡</span>
+    <div><strong>Exam Trick:</strong> To check if X → Y holds — look for two rows with the same X value. If they have different Y values, the FD does NOT hold.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 2 — ARMSTRONG'S AXIOMS
+═══════════════════════════════════════════════ -->
+<div class="section" id="armstrong">
+  <div class="section-header">
+    <div class="section-num num-teal">02</div>
+    <div class="section-title">Armstrong's Axioms (IR1–IR6)</div>
+  </div>
+
+  <p>Six inference rules to derive new FDs from existing ones. IR1–IR3 are the primary (Armstrong's) axioms; IR4–IR6 are derived.</p>
+
+  <div class="axiom-grid">
+    <div class="axiom-card">
+      <div class="axiom-name">IR1 — Reflexive Rule</div>
+      <div class="axiom-rule">If Y ⊆ X, then X → Y</div>
+      <div class="axiom-eg">A,B → A (always true, trivial)</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">IR2 — Transitivity</div>
+      <div class="axiom-rule">X→Y, Y→Z  ⟹  X→Z</div>
+      <div class="axiom-eg">Name→Marks, Marks→Dept  ⟹  Name→Dept</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">IR3 — Augmentation</div>
+      <div class="axiom-rule">X→Y  ⟹  XZ → YZ</div>
+      <div class="axiom-eg">RollNo→Name  ⟹  RollNo,Marks→Name,Marks</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">IR4 — Decomposition</div>
+      <div class="axiom-rule">X→YZ  ⟹  X→Y  and  X→Z</div>
+      <div class="axiom-eg">A→BC  ⟹  A→B  and  A→C</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">IR5 — Union / Additive</div>
+      <div class="axiom-rule">X→Y, X→Z  ⟹  X→YZ</div>
+      <div class="axiom-eg">A→B, A→C  ⟹  A→BC</div>
+    </div>
+    <div class="axiom-card">
+      <div class="axiom-name">IR6 — Pseudo-Transitivity</div>
+      <div class="axiom-rule">X→Y, WY→Z  ⟹  WX→Z</div>
+      <div class="axiom-eg">A→B, CB→D  ⟹  CA→D</div>
+    </div>
+  </div>
+
+  <div class="alert alert-tip">
+    <span class="alert-icon">✓</span>
+    <div><strong>Remember:</strong> Decomposition applies to RHS only. You <strong>cannot</strong> decompose LHS. <code>AB→C</code> cannot become <code>A→C</code> or <code>B→C</code>.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 3 — CLOSURES
+═══════════════════════════════════════════════ -->
+<div class="section" id="closure">
+  <div class="section-header">
+    <div class="section-num num-amber">03</div>
+    <div class="section-title">Closures & Equivalence</div>
+  </div>
+
+  <div class="def-box amber">
+    <div class="def-label">Closure of an Attribute Set X (written X⁺)</div>
+    The set of all attributes that can be functionally determined by X using the given FD set F.<br>
+    <code style="font-family:monospace;font-size:13px;">X⁺ = all attributes Y such that X → Y can be derived from F</code>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">Algorithm: Computing X⁺</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">Start: <code>result = {X}</code> (X itself, by Reflexivity)</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">For each FD <strong>A → B</strong> in F: if A ⊆ result, add B to result</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">Repeat Step 2 until no new attributes are added</div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">result = X⁺</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-head">Example — R(A,B,C,D,E), F = {A→B, B→C, C→D, D→E}</div>
+    <code class="formula amber">A⁺ = {A}  →add B (A→B)→  {A,B}  →add C (B→C)→  {A,B,C}
+    →add D (C→D)→  {A,B,C,D}  →add E (D→E)→  {A,B,C,D,E}
+
+CD⁺ = {C,D}  →add E (D→E)→  {C,D,E}   ← C,D,E only!</code>
+  </div>
+
+  <hr class="divider">
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">Equivalence of FD Sets (E ≡ F)</div>
+    <p>Two FD sets <strong>E</strong> and <strong>F</strong> are equivalent if <strong>E covers F</strong> AND <strong>F covers E</strong>.</p>
+    <div class="def-box teal">
+      <div class="def-label">E covers F</div>
+      For every FD X→Y in F, compute X⁺ with respect to <strong>E</strong>. If X⁺ contains Y, then E covers that FD.
+    </div>
+    <div class="example">
+      <div class="example-head">Example — E = {A→B, AB→C, D→AC, D→E}, F = {A→BC, D→AE}</div>
+      <strong>Check E covers F:</strong><br>
+      <code class="formula">A→BC: compute A⁺ wrt E = {A,B,C} ✓ (contains B and C)
+D→AE: compute D⁺ wrt E = {D,A,C,E,B} ✓ (contains A and E)</code>
+      <strong>Check F covers E:</strong><br>
+      <code class="formula">A→B:  A⁺ wrt F = {A,B,C} ✓
+AB→C: AB⁺ wrt F = {A,B,C} ✓
+D→AC: D⁺ wrt F = {D,A,E,B,C} ✓
+D→E:  D⁺ wrt F = {D,A,E,B,C} ✓</code>
+      <span style="color:var(--green);font-weight:700;">∴ E ≡ F (equivalent)</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 4 — MINIMAL COVER
+═══════════════════════════════════════════════ -->
+<div class="section" id="minimal">
+  <div class="section-header">
+    <div class="section-num num-red">04</div>
+    <div class="section-title">Minimal Cover (Canonical Cover)</div>
+  </div>
+
+  <div class="def-box red">
+    <div class="def-label">Definition</div>
+    A minimal cover F' of a set F has <strong>no redundant attributes</strong> on either side and <strong>no redundant FDs</strong>. It is equivalent to F.
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent4);">3-Step Algorithm</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body"><strong>Decompose RHS</strong> — Every FD must have a <em>single attribute</em> on RHS.<br>
+        <code style="font-size:13px;">A→BC</code> becomes <code style="font-size:13px;">A→B</code> and <code style="font-size:13px;">A→C</code></div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body"><strong>Remove extraneous (redundant) LHS attributes</strong> — For each FD AB→C, check if A→C or B→C already holds. If yes, remove the redundant attribute. Also remove any trivial FDs.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body"><strong>Remove redundant FDs</strong> — Using transitivity, if an FD can be derived from others, remove it.<br>
+        If B→D and D→A exist, then B→A is redundant.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-head">Example 1 — E = {B→A, A→D, AB→D}</div>
+    <code class="formula red">Step 1: RHS already single. No change.
+
+Step 2: AB→D — check if A→D exists. YES! So B is extraneous.
+        Replace AB→D with B→D
+        E' = {B→A, A→D, B→D}
+
+Step 3: B→A and A→D ⟹ B→D (by transitivity). So B→D is redundant.
+        Remove B→D.
+
+Minimal Cover = {B→A, A→D}</code>
+  </div>
+
+  <div class="example">
+    <div class="example-head">Example 2 — F = {A→B, C→B, D→ABC, AC→D}</div>
+    <code class="formula red">Step 1: D→ABC  becomes  D→A, D→B, D→C
+        F = {A→B, C→B, D→A, D→B, D→C, AC→D}
+
+Step 2: AC→D — check A→D? No. Check C→D? No. Keep AC→D.
+
+Step 3: D→A and A→B ⟹ D→B is redundant. Remove D→B.
+
+Minimal Cover = {A→B, C→B, D→A, D→C, AC→D}</code>
+  </div>
+
+  <div class="alert alert-warn">
+    <span class="alert-icon">⚠</span>
+    <div><strong>Common Mistake:</strong> Do Step 1 FIRST before checking LHS redundancy. Doing it out of order gives wrong results.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 5 — KEYS
+═══════════════════════════════════════════════ -->
+<div class="section" id="keys">
+  <div class="section-header">
+    <div class="section-num num-blue">05</div>
+    <div class="section-title">Keys & Attributes</div>
+  </div>
+
+  <table class="tbl">
+    <tr><th>Key Type</th><th>Definition</th><th>Example</th></tr>
+    <tr>
+      <td><strong>Super Key</strong></td>
+      <td>Set of attributes uniquely identifying every tuple. Redundant attrs allowed.</td>
+      <td>{BookId}, {BookId,Name}, {BookId,Name,Author}</td>
+    </tr>
+    <tr>
+      <td><strong>Candidate Key (CK)</strong></td>
+      <td>Minimal super key — no proper subset is a super key.</td>
+      <td>If {A} is SK and A alone determines all, it's a CK</td>
+    </tr>
+    <tr>
+      <td><strong>Primary Key</strong></td>
+      <td>One chosen candidate key designated for the relation.</td>
+      <td>Arbitrarily picked from CKs</td>
+    </tr>
+    <tr>
+      <td><strong>Foreign Key</strong></td>
+      <td>Attribute(s) referencing the primary key of another relation.</td>
+      <td>Dept.Dno references Department.Dno</td>
+    </tr>
+    <tr>
+      <td><strong>Prime Attribute</strong></td>
+      <td>Member of <em>some</em> candidate key.</td>
+      <td>If CKs = {AD, BD}, then A,B,D are prime</td>
+    </tr>
+    <tr>
+      <td><strong>Non-Prime Attribute (NPA)</strong></td>
+      <td>Not a member of any candidate key.</td>
+      <td>All remaining attributes</td>
+    </tr>
+  </table>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent5);">Finding Candidate Keys — Algorithm</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">Find (ABCD…)⁺ — it equals all attributes (confirms it's a superkey)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">Remove attributes whose RHS appears in some FD. Keep reducing the SK.</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">Check: is the reduced SK still a super key? (compute its closure)</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-body">Check subsets — if no proper subset is a SK, it's a <strong>Candidate Key</strong></div></div>
+      <div class="step"><div class="step-num">5</div><div class="step-body">Check if any prime attribute appears in RHS of FDs → if yes, there may be more CKs. Replace prime attrs and repeat.</div></div>
+    </div>
+  </div>
+
+  <div class="example">
+    <div class="example-head">Example — R(A,B,C,D), F = {A→B, B→C, C→A}</div>
+    <code class="formula">Step 1: (ABCD)⁺ = {A,B,C,D} ✓ SK = {ABCD}
+Step 2: A→B so remove B; A,B→C so remove C; SK = {AD}
+Step 3: AD⁺ = {A,D,B,C} ✓ still SK
+Step 4: A⁺={A,B,C} not SK; D⁺={D} not SK → {AD} is CK
+Step 5: A is in RHS of C→A → try {CD}: C⁺={C,A,B} not SK; D⁺={D} not SK → {CD} is CK
+        C is in RHS of B→C → try {BD}: B⁺={B,C,A} not SK; D⁺={D} not SK → {BD} is CK
+
+Candidate Keys = {AD, CD, BD}
+Prime Attributes = {A, B, C, D}  (all!)</code>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 6 — NORMAL FORMS
+═══════════════════════════════════════════════ -->
+<div class="section" id="nf">
+  <div class="section-header">
+    <div class="section-num num-green">06</div>
+    <div class="section-title">Normal Forms — 1NF to BCNF</div>
+  </div>
+
+  <!-- Progression Diagram -->
+  <div class="nf-flow">
+    <div class="nf-box" style="background:rgba(240,106,106,0.12);border-color:#f06a6a;color:#f06a6a;">Unnormalized</div>
+    <div class="nf-arrow">→</div>
+    <div class="nf-box" style="background:rgba(245,158,58,0.12);border-color:#f59e3a;color:#f59e3a;">1NF</div>
+    <div class="nf-arrow">→</div>
+    <div class="nf-box" style="background:rgba(91,196,255,0.12);border-color:#5bc4ff;color:#5bc4ff;">2NF</div>
+    <div class="nf-arrow">→</div>
+    <div class="nf-box" style="background:rgba(74,222,128,0.12);border-color:#4ade80;color:#4ade80;">3NF</div>
+    <div class="nf-arrow">→</div>
+    <div class="nf-box" style="background:rgba(124,106,247,0.12);border-color:#a599ff;color:#a599ff;">BCNF</div>
+  </div>
+
+  <!-- 1NF -->
+  <div class="card" style="border-color:rgba(245,158,58,0.4);">
+    <div class="card-title" style="color:var(--accent3);">1NF — First Normal Form</div>
+    <div class="def-box amber">
+      <div class="def-label">Rule</div>
+      Every attribute must contain only <strong>atomic (indivisible)</strong> values. No multi-valued or composite attributes.
+    </div>
+    <p><strong>How to fix violations:</strong></p>
+    <ul class="styled">
+      <li><strong>Method 1:</strong> Move the multi-valued attribute + primary key into a separate table</li>
+      <li><strong>Method 2:</strong> Expand the key — create one row per value</li>
+      <li><strong>Method 3:</strong> Create separate columns for each possible value (Dlocation1, Dlocation2…)</li>
+    </ul>
+  </div>
+
+  <!-- 2NF -->
+  <div class="card" style="border-color:rgba(91,196,255,0.4);">
+    <div class="card-title" style="color:var(--accent5);">2NF — Second Normal Form</div>
+    <div class="def-box blue">
+      <div class="def-label">Two Conditions</div>
+      1. Must be in 1NF<br>
+      2. No <strong>Partial Dependency</strong>: no proper subset of any Candidate Key → Non-Prime Attribute
+    </div>
+    <p><strong>Violation pattern:</strong> <code style="font-size:13px;">Proper subset of CK → NPA</code></p>
+    <div class="example">
+      <div class="example-head">Check FDs for 2NF Violation</div>
+      <table class="tbl" style="margin:6px 0;">
+        <tr><th>FD</th><th>Type</th><th>2NF Status</th></tr>
+        <tr><td><code>CK → NPA</code></td><td>Full CK determines NPA</td><td><span class="badge badge-v">OK</span></td></tr>
+        <tr><td><code>Subset of CK → NPA</code></td><td>Partial Dependency</td><td><span class="badge badge-x">VIOLATES</span></td></tr>
+        <tr><td><code>NPA → NPA</code></td><td>NPA determines NPA</td><td><span class="badge badge-v">OK for 2NF</span></td></tr>
+      </table>
+    </div>
+    <div class="def-box blue">
+      <div class="def-label">Decomposition Rule</div>
+      For each violating FD <code>A→B</code> where A is a subset of CK: create a new table R2(A,B) and remove B from the original table R1.
+    </div>
+  </div>
+
+  <!-- 3NF -->
+  <div class="card" style="border-color:rgba(74,222,128,0.4);">
+    <div class="card-title" style="color:var(--green);">3NF — Third Normal Form</div>
+    <div class="def-box green">
+      <div class="def-label">Definition 1 (Intuitive)</div>
+      1. Must be in 2NF<br>
+      2. No <strong>Transitive Dependency</strong>: NPA → NPA is not allowed
+    </div>
+    <div class="def-box green">
+      <div class="def-label">Definition 2 (Formal — use this for all checks)</div>
+      For every non-trivial FD X→Y in R, either:<br>
+      • <strong>X is a Super Key</strong>, OR<br>
+      • <strong>Y is a Prime Attribute</strong>
+    </div>
+    <div class="example">
+      <div class="example-head">Check FDs for 3NF Violation</div>
+      <table class="tbl" style="margin:6px 0;">
+        <tr><th>FD</th><th>LHS</th><th>RHS</th><th>3NF Status</th></tr>
+        <tr><td><code>CK → NPA</code></td><td>Super Key</td><td>—</td><td><span class="badge badge-v">OK</span></td></tr>
+        <tr><td><code>CK → PA</code></td><td>Super Key</td><td>—</td><td><span class="badge badge-v">OK</span></td></tr>
+        <tr><td><code>NPA → PA</code></td><td>Not SK</td><td>Prime Attr</td><td><span class="badge badge-v">OK</span></td></tr>
+        <tr><td><code>NPA → NPA</code></td><td>Not SK</td><td>Non-Prime</td><td><span class="badge badge-x">VIOLATES</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- BCNF -->
+  <div class="card" style="border-color:rgba(124,106,247,0.4);">
+    <div class="card-title" style="color:var(--accent1);">BCNF — Boyce-Codd Normal Form (Stricter than 3NF)</div>
+    <div class="def-box">
+      <div class="def-label">Definition</div>
+      For every non-trivial FD X→Y in R, <strong>X must be a Super Key</strong>.<br>
+      <em style="color:var(--text3);">There is NO exception for prime attributes (unlike 3NF)</em>
+    </div>
+    <div class="alert alert-important">
+      <span class="alert-icon">⚡</span>
+      <div><strong>Key Difference:</strong> Every relation in BCNF is in 3NF, but NOT every 3NF relation is in BCNF.<br>
+      3NF allows <code>NPA → PA</code> but BCNF does NOT.</div>
+    </div>
+    <div class="example">
+      <div class="example-head">BCNF Check — Only One Rule</div>
+      <table class="tbl" style="margin:6px 0;">
+        <tr><th>FD X→Y</th><th>Is X a Super Key?</th><th>BCNF Status</th></tr>
+        <tr><td><code>SuperKey → anything</code></td><td>Yes</td><td><span class="badge badge-v">OK</span></td></tr>
+        <tr><td><code>Non-SuperKey → anything</code></td><td>No</td><td><span class="badge badge-x">VIOLATES</span></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- NF Summary Table -->
+  <div class="card">
+    <div class="card-title" style="color:var(--text2);">Normal Forms — Quick Comparison</div>
+    <table class="tbl">
+      <tr><th>NF</th><th>Eliminates</th><th>Condition</th></tr>
+      <tr><td><strong>1NF</strong></td><td>Non-atomic values</td><td>All attributes atomic</td></tr>
+      <tr><td><strong>2NF</strong></td><td>Partial Dependencies</td><td>No subset of CK → NPA</td></tr>
+      <tr><td><strong>3NF</strong></td><td>Transitive Dependencies</td><td>No NPA → NPA (or formally: LHS is SK or RHS is PA)</td></tr>
+      <tr><td><strong>BCNF</strong></td><td>All anomalies (usually)</td><td>Every FD LHS must be a Super Key</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 7 — DECOMPOSITION
+═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num num-purple">07</div>
+    <div class="section-title">Lossless Join & Dependency Preserving Decomposition</div>
+  </div>
+
+  <div class="axiom-grid">
+    <div class="axiom-card" style="border-color:rgba(56,217,192,0.4);">
+      <div class="axiom-name" style="color:var(--accent2);">Lossless Join (LJ)</div>
+      <div class="axiom-eg" style="font-size:13px;">When decomposed tables R1 and R2 are re-joined, the result is exactly the original R — no spurious (extra fake) tuples appear.</div>
+    </div>
+    <div class="axiom-card" style="border-color:rgba(245,158,58,0.4);">
+      <div class="axiom-name" style="color:var(--accent3);">Dependency Preserving (DP)</div>
+      <div class="axiom-eg" style="font-size:13px;">All original FDs can be checked in individual decomposed tables without needing a join. Every FD in F is covered by some Ri.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">Test for Lossless Join (2 tables)</div>
+    <div class="def-box teal">
+      <div class="def-label">Sufficient Condition</div>
+      Decomposition of R into R1 and R2 is lossless if:<br>
+      • (R1 ∩ R2) → R1, OR<br>
+      • (R1 ∩ R2) → R2<br>
+      <em style="color:var(--text3);">i.e., the common attributes form a super key for at least one of R1 or R2</em>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">Test for Dependency Preservation</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-body">For each FD X→Y in F, check if X and Y both appear in the same Ri</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-body">If every FD is "covered" by some Ri, decomposition is dependency preserving</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-body">If some FD spans multiple tables (can't be checked without join), DP is violated</div></div>
+    </div>
+  </div>
+
+  <div class="alert alert-important">
+    <span class="alert-icon">⚡</span>
+    <div>BCNF decomposition always achieves <strong>Lossless Join</strong> but may lose <strong>Dependency Preservation</strong>. 3NF decomposition can achieve both. This is why 3NF is sometimes preferred over BCNF.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 8 — ANOMALIES
+═══════════════════════════════════════════════ -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-num num-red">08</div>
+    <div class="section-title">Database Anomalies</div>
+  </div>
+
+  <div class="axiom-grid" style="grid-template-columns:repeat(3,1fr);">
+    <div class="axiom-card" style="border-color:rgba(240,106,106,0.4);">
+      <div class="axiom-name" style="color:var(--accent4);">Insertion Anomaly</div>
+      <div class="axiom-eg">Cannot insert data without having other (unrelated) data present first. E.g., can't add a new dept without adding an employee.</div>
+    </div>
+    <div class="axiom-card" style="border-color:rgba(245,158,58,0.4);">
+      <div class="axiom-name" style="color:var(--accent3);">Update Anomaly</div>
+      <div class="axiom-eg">Changing one fact requires updating multiple rows. Missing one causes inconsistency. E.g., dept building stored repeatedly.</div>
+    </div>
+    <div class="axiom-card" style="border-color:rgba(91,196,255,0.4);">
+      <div class="axiom-name" style="color:var(--accent5);">Deletion Anomaly</div>
+      <div class="axiom-eg">Deleting a row causes unintended loss of other information. E.g., deleting last employee in a dept erases dept info.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 9 — TRANSACTION MANAGEMENT
+═══════════════════════════════════════════════ -->
+<div class="section" id="txn">
+  <div class="section-header">
+    <div class="section-num num-purple">09</div>
+    <div class="section-title">Transaction Management</div>
+  </div>
+
+  <div class="def-box">
+    <div class="def-label">Transaction</div>
+    A <strong>logical unit of work</strong> — a sequence of database operations (reads/writes) that must be executed as a single unit. Either ALL operations succeed (committed) or NONE do (aborted/rolled back).
+  </div>
+
+  <!-- ACID -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent1);">ACID Properties</div>
+    <table class="tbl">
+      <tr><th>Property</th><th>Meaning</th><th>Ensures</th></tr>
+      <tr>
+        <td><strong style="color:#a599ff;">Atomicity</strong></td>
+        <td>All-or-nothing execution</td>
+        <td>No partial updates. If T fails midway, all changes are undone (rollback).</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#38d9c0;">Consistency</strong></td>
+        <td>Database remains in a valid state</td>
+        <td>Transaction moves DB from one consistent state to another. Integrity constraints maintained.</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f59e3a;">Isolation</strong></td>
+        <td>Concurrent transactions don't interfere</td>
+        <td>Partial results of one T are invisible to others. Achieved via concurrency control (locks).</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f06a6a;">Durability</strong></td>
+        <td>Committed changes persist</td>
+        <td>Once committed, even a system crash can't undo the changes (write-ahead logging).</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Transaction States -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">Transaction States</div>
+    <div class="nf-flow" style="flex-direction:column;gap:4px;align-items:flex-start;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div class="nf-box" style="background:rgba(245,158,58,0.1);border-color:#f59e3a;color:#f59e3a;font-size:13px;padding:7px 14px;">Active</div>
+        <span style="color:var(--text2);font-size:13px;">→ Transaction is executing</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:20px;">
+        <div class="nf-box" style="background:rgba(91,196,255,0.1);border-color:#5bc4ff;color:#5bc4ff;font-size:13px;padding:7px 14px;">Partially Committed</div>
+        <span style="color:var(--text2);font-size:13px;">→ Last statement executed, not yet written to disk</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:40px;">
+        <div class="nf-box" style="background:rgba(74,222,128,0.1);border-color:#4ade80;color:#4ade80;font-size:13px;padding:7px 14px;">Committed</div>
+        <span style="color:var(--text2);font-size:13px;">→ Changes written to disk permanently ✓</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:20px;">
+        <div class="nf-box" style="background:rgba(240,106,106,0.1);border-color:#f06a6a;color:#f06a6a;font-size:13px;padding:7px 14px;">Failed</div>
+        <span style="color:var(--text2);font-size:13px;">→ Error occurred</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-left:40px;">
+        <div class="nf-box" style="background:rgba(240,106,106,0.08);border-color:#c05050;color:#f06a6a;font-size:13px;padding:7px 14px;">Aborted</div>
+        <span style="color:var(--text2);font-size:13px;">→ Rolled back, DB restored to state before T started</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Types -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">Schedules</div>
+    <table class="tbl">
+      <tr><th>Schedule Type</th><th>Definition</th><th>Safe?</th></tr>
+      <tr>
+        <td><strong>Serial Schedule</strong></td>
+        <td>Transactions execute one after another (no interleaving)</td>
+        <td><span class="badge badge-v">Always correct</span></td>
+      </tr>
+      <tr>
+        <td><strong>Serializable Schedule</strong></td>
+        <td>Equivalent result to some serial schedule, but may interleave</td>
+        <td><span class="badge badge-v">Correct</span></td>
+      </tr>
+      <tr>
+        <td><strong>Conflict Serializable</strong></td>
+        <td>Can be transformed to a serial schedule by swapping non-conflicting ops</td>
+        <td><span class="badge badge-v">Correct</span></td>
+      </tr>
+      <tr>
+        <td><strong>Non-Serializable</strong></td>
+        <td>Cannot be equivalent to any serial schedule</td>
+        <td><span class="badge badge-x">May cause errors</span></td>
+      </tr>
+    </table>
+    <div class="def-box amber">
+      <div class="def-label">Conflicting Operations</div>
+      Two operations conflict if: (1) They belong to <strong>different transactions</strong>, (2) They access the <strong>same data item</strong>, and (3) At least <strong>one is a Write</strong>.<br>
+      Read-Read: No conflict. Read-Write or Write-Write: Conflict.
+    </div>
+  </div>
+
+  <!-- Concurrency Problems -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent4);">Concurrency Problems</div>
+    <table class="tbl">
+      <tr><th>Problem</th><th>Description</th><th>Example</th></tr>
+      <tr>
+        <td><strong>Dirty Read</strong></td>
+        <td>T2 reads a value written by T1 before T1 commits. If T1 aborts, T2 has wrong data.</td>
+        <td>T1 writes X=50, T2 reads X=50, T1 aborts → T2 used ghost value</td>
+      </tr>
+      <tr>
+        <td><strong>Lost Update</strong></td>
+        <td>Two transactions read and update the same data. One update is overwritten by the other.</td>
+        <td>T1 reads X=100, T2 reads X=100, T1 writes X=150, T2 writes X=120 → T1's update lost</td>
+      </tr>
+      <tr>
+        <td><strong>Unrepeatable Read</strong></td>
+        <td>T1 reads same data twice and gets different values because T2 updated it in between.</td>
+        <td>T1 reads X=100, T2 updates X=200 and commits, T1 reads X=200 → inconsistent</td>
+      </tr>
+      <tr>
+        <td><strong>Phantom Read</strong></td>
+        <td>T1 re-executes a query and gets more/fewer rows because T2 inserted/deleted rows.</td>
+        <td>T1 counts rows = 5, T2 inserts a row, T1 counts again = 6 → phantom row</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 10 — LOCKING
+═══════════════════════════════════════════════ -->
+<div class="section" id="locks">
+  <div class="section-header">
+    <div class="section-num num-teal">10</div>
+    <div class="section-title">Locking (Concurrency Control)</div>
+  </div>
+
+  <div class="def-box teal">
+    <div class="def-label">Lock</div>
+    A mechanism to control concurrent access to data items. A transaction must acquire a lock on a data item before accessing it.
+  </div>
+
+  <!-- Lock Types -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">Types of Locks</div>
+    <div class="axiom-grid">
+      <div class="axiom-card" style="border-color:rgba(56,217,192,0.4);">
+        <div class="axiom-name" style="color:var(--accent2);">Shared Lock (S-Lock / Read Lock)</div>
+        <div class="axiom-eg">Acquired for reading. Multiple transactions can hold S-lock on the same item simultaneously.<br><code style="font-size:12px;">lock-S(X)</code> — allows read(X)</div>
+      </div>
+      <div class="axiom-card" style="border-color:rgba(240,106,106,0.4);">
+        <div class="axiom-name" style="color:var(--accent4);">Exclusive Lock (X-Lock / Write Lock)</div>
+        <div class="axiom-eg">Acquired for writing. Only ONE transaction can hold X-lock. No other lock (S or X) can coexist.<br><code style="font-size:12px;">lock-X(X)</code> — allows read(X) and write(X)</div>
+      </div>
+    </div>
+
+    <!-- Compatibility Matrix -->
+    <div class="card-title" style="color:var(--text2);margin-top:16px;">Lock Compatibility Matrix</div>
+    <table class="lock-matrix">
+      <tr>
+        <th></th>
+        <th>T2 requests S-Lock</th>
+        <th>T2 requests X-Lock</th>
+      </tr>
+      <tr>
+        <td><strong>T1 holds S-Lock</strong></td>
+        <td class="compat">✓ Compatible</td>
+        <td class="incompat">✗ Wait</td>
+      </tr>
+      <tr>
+        <td><strong>T1 holds X-Lock</strong></td>
+        <td class="incompat">✗ Wait</td>
+        <td class="incompat">✗ Wait</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- 2PL -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent1);">Two-Phase Locking (2PL)</div>
+    <div class="def-box">
+      <div class="def-label">Protocol</div>
+      Every transaction must follow two phases:<br>
+      <strong>Phase 1 — Growing Phase:</strong> Acquire locks only; no releasing allowed.<br>
+      <strong>Phase 2 — Shrinking Phase:</strong> Release locks only; no new locks allowed.
+    </div>
+    <div class="alert alert-tip">
+      <span class="alert-icon">✓</span>
+      <div><strong>2PL guarantees conflict serializability.</strong> The point where a transaction acquires its last lock is called the <strong>Lock Point</strong>. The serial order of transactions = order of their lock points.</div>
+    </div>
+
+    <div class="axiom-grid">
+      <div class="axiom-card" style="border-color:rgba(74,222,128,0.4);">
+        <div class="axiom-name" style="color:var(--green);">Strict 2PL</div>
+        <div class="axiom-eg">All <strong>exclusive (write)</strong> locks are held until the transaction commits or aborts. Prevents dirty reads. Avoids cascading rollbacks.</div>
+      </div>
+      <div class="axiom-card" style="border-color:rgba(124,106,247,0.4);">
+        <div class="axiom-name" style="color:var(--accent1);">Rigorous 2PL</div>
+        <div class="axiom-eg">All locks (both S and X) held until commit/abort. Strictest form. Transactions appear to execute serially.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deadlock -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent4);">Deadlock</div>
+    <div class="def-box red">
+      <div class="def-label">Definition</div>
+      A situation where two or more transactions are waiting for each other to release locks — creating a cycle of waiting with no transaction able to proceed.
+    </div>
+    <div class="axiom-grid">
+      <div class="axiom-card">
+        <div class="axiom-name" style="color:var(--accent3);">Prevention</div>
+        <div class="axiom-eg">Wait-Die scheme: Older T waits, younger T aborts.<br>Wound-Wait scheme: Older T aborts younger T, younger T waits.</div>
+      </div>
+      <div class="axiom-card">
+        <div class="axiom-name" style="color:var(--accent5);">Detection</div>
+        <div class="axiom-eg">Build a <strong>Wait-For Graph</strong>. If the graph has a cycle → deadlock exists. Choose a victim transaction to abort.</div>
+      </div>
+    </div>
+    <div class="example">
+      <div class="example-head">Classic Deadlock Example</div>
+      <code class="formula red">T1: lock-X(A) → waiting for lock-X(B)
+T2: lock-X(B) → waiting for lock-X(A)
+↑ Neither can proceed — DEADLOCK!</code>
+    </div>
+  </div>
+
+  <!-- Lock Granularity -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">Lock Granularity</div>
+    <table class="tbl">
+      <tr><th>Granularity</th><th>Unit Locked</th><th>Concurrency</th><th>Overhead</th></tr>
+      <tr><td>Fine</td><td>Tuple / Record</td><td>High</td><td>High</td></tr>
+      <tr><td>Medium</td><td>Page / Block</td><td>Medium</td><td>Medium</td></tr>
+      <tr><td>Coarse</td><td>Table / Database</td><td>Low</td><td>Low</td></tr>
+    </table>
+    <p><strong>Intention Locks (IS, IX, SIX)</strong> — used in multi-level locking to indicate that a finer-grained lock will be acquired inside. Prevents conflicts without checking all lower levels.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     SECTION 11 — NoSQL & KEY-VALUE STORE ⭐
+═══════════════════════════════════════════════ -->
+<div class="section" id="nosql">
+  <div class="section-header">
+    <div class="section-num num-amber">11</div>
+    <div class="section-title">NoSQL Databases &amp; Key-Value Stores ⭐ IMPORTANT</div>
+  </div>
+
+  <div class="def-box amber">
+    <div class="def-label">NoSQL ("Not Only SQL")</div>
+    A class of database systems that provide a mechanism for storage and retrieval of data that is modeled differently from relational tables. Designed for large-scale, distributed systems with high availability and horizontal scalability.
+  </div>
+
+  <!-- CAP Theorem -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">CAP Theorem (Brewer's Theorem)</div>
+    <p>A distributed system can only guarantee <strong>two</strong> of these three properties at any time:</p>
+    <div class="axiom-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="axiom-card" style="border-color:rgba(124,106,247,0.4);text-align:center;">
+        <div class="axiom-name" style="color:var(--accent1);">C — Consistency</div>
+        <div class="axiom-eg">Every read receives the most recent write or an error. All nodes see the same data at the same time.</div>
+      </div>
+      <div class="axiom-card" style="border-color:rgba(56,217,192,0.4);text-align:center;">
+        <div class="axiom-name" style="color:var(--accent2);">A — Availability</div>
+        <div class="axiom-eg">Every request receives a (non-error) response, even without the latest data. System is always operational.</div>
+      </div>
+      <div class="axiom-card" style="border-color:rgba(245,158,58,0.4);text-align:center;">
+        <div class="axiom-name" style="color:var(--accent3);">P — Partition Tolerance</div>
+        <div class="axiom-eg">System continues operating even if network splits occur between nodes (messages dropped/delayed).</div>
+      </div>
+    </div>
+    <div class="alert alert-important">
+      <span class="alert-icon">⚡</span>
+      <div>In real distributed systems, <strong>P (Partition Tolerance) must always be chosen</strong> because network failures always happen. So the real choice is between <strong>CP</strong> (consistent but may be unavailable) vs <strong>AP</strong> (available but may be inconsistent).</div>
+    </div>
+  </div>
+
+  <!-- NoSQL Types -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">NoSQL Database Types</div>
+    <div class="kv-grid">
+      <div class="kv-card" style="border-color:rgba(124,106,247,0.4);">
+        <div style="font-size:24px;margin-bottom:8px;">🗝</div>
+        <div class="kv-name" style="color:var(--accent1);">Key-Value Store</div>
+        <div class="kv-desc">Simplest NoSQL model. Data stored as {key: value} pairs. Extremely fast lookups. Examples: Redis, DynamoDB, Riak</div>
+      </div>
+      <div class="kv-card" style="border-color:rgba(56,217,192,0.4);">
+        <div style="font-size:24px;margin-bottom:8px;">📋</div>
+        <div class="kv-name" style="color:var(--accent2);">Document Store</div>
+        <div class="kv-desc">Data stored as documents (JSON/BSON). Flexible schema. Examples: MongoDB, CouchDB, Firestore</div>
+      </div>
+      <div class="kv-card" style="border-color:rgba(245,158,58,0.4);">
+        <div style="font-size:24px;margin-bottom:8px;">📊</div>
+        <div class="kv-name" style="color:var(--accent3);">Column-Family</div>
+        <div class="kv-desc">Data stored in column families, optimized for large-scale analytics. Examples: Cassandra, HBase, BigTable</div>
+      </div>
+      <div class="kv-card" style="border-color:rgba(240,106,106,0.4);">
+        <div style="font-size:24px;margin-bottom:8px;">🕸</div>
+        <div class="kv-name" style="color:var(--accent4);">Graph Database</div>
+        <div class="kv-desc">Data stored as nodes and edges for relationship-heavy data. Examples: Neo4j, Amazon Neptune, ArangoDB</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY-VALUE STORE DEEP DIVE -->
+  <div class="card" style="border-color:rgba(124,106,247,0.5);background:linear-gradient(135deg,rgba(124,106,247,0.06),rgba(13,15,20,0));">
+    <div class="card-title" style="color:var(--accent1);font-size:16px;">⭐ KEY-VALUE STORE — Deep Dive</div>
+
+    <div class="def-box">
+      <div class="def-label">Definition</div>
+      A Key-Value Store is the simplest form of NoSQL database. It stores data as a collection of key-value pairs, similar to a dictionary or hash map. The <strong>key</strong> is a unique identifier; the <strong>value</strong> can be any data (string, JSON, binary, lists, sets, etc.).
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent2);">Core Operations</div>
+      <table class="tbl">
+        <tr><th>Operation</th><th>Syntax</th><th>Description</th></tr>
+        <tr>
+          <td><strong>GET</strong></td>
+          <td><code>GET(key)</code></td>
+          <td>Retrieve value by key. O(1) average time</td>
+        </tr>
+        <tr>
+          <td><strong>PUT / SET</strong></td>
+          <td><code>PUT(key, value)</code></td>
+          <td>Insert or update a key-value pair</td>
+        </tr>
+        <tr>
+          <td><strong>DELETE</strong></td>
+          <td><code>DELETE(key)</code></td>
+          <td>Remove a key-value pair</td>
+        </tr>
+        <tr>
+          <td><strong>EXISTS</strong></td>
+          <td><code>EXISTS(key)</code></td>
+          <td>Check if a key exists. Returns boolean</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent3);">Internal Structure — Hash Table Based</div>
+      <code class="formula">Key     → Hash Function → Bucket/Slot → Value
+"user1" →   h("user1")   →    Slot 42   →  {name:"Alice", age:25}
+"user2" →   h("user2")   →    Slot 17   →  {name:"Bob",   age:30}
+"sess1" →   h("sess1")   →    Slot 99   →  "token_abc123"</code>
+      <p style="margin-top:10px;">The hash function maps each key to a specific memory location, enabling O(1) average case lookups regardless of dataset size.</p>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent4);">Data Partitioning — Consistent Hashing</div>
+      <div class="def-box red">
+        <div class="def-label">Consistent Hashing</div>
+        In distributed KV stores, data is distributed across multiple nodes using a <strong>hash ring</strong>. Each key is hashed and assigned to the nearest node on the ring in clockwise direction. When a node is added/removed, only <code>K/N</code> keys need to be moved (K = total keys, N = nodes) — minimizes data migration.
+      </div>
+      <div class="example">
+        <div class="example-head">Ring Example</div>
+        <code class="formula">Ring: 0 ────── Node A (25) ──── Node B (60) ──── Node C (90) ──── 100
+Key hash = 40 → goes to Node B (nearest clockwise)
+Key hash = 70 → goes to Node C
+Key hash = 95 → wraps around → goes to Node A</code>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent5);">Replication in Key-Value Stores</div>
+      <p>To ensure <strong>availability and fault tolerance</strong>, data is replicated across multiple nodes.</p>
+      <table class="tbl">
+        <tr><th>Term</th><th>Meaning</th></tr>
+        <tr><td><strong>Replication Factor (N)</strong></td><td>Number of copies of each data item stored</td></tr>
+        <tr><td><strong>Write Quorum (W)</strong></td><td>Minimum nodes that must confirm a write succeeds</td></tr>
+        <tr><td><strong>Read Quorum (R)</strong></td><td>Minimum nodes to read from for a consistent result</td></tr>
+        <tr><td><strong>Quorum Condition</strong></td><td>R + W > N ensures strong consistency</td></tr>
+      </table>
+      <div class="example">
+        <div class="example-head">Quorum Example with N=3</div>
+        <code class="formula">N=3, W=2, R=2 → R+W=4 > 3 ✓ → Strong Consistency
+N=3, W=1, R=1 → R+W=2 < 3 → Eventual Consistency (faster, less safe)
+N=3, W=3, R=1 → R+W=4 > 3 ✓ → Very strong but slow writes</code>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--green);">Versioning & Conflict Resolution</div>
+      <div class="axiom-grid">
+        <div class="axiom-card">
+          <div class="axiom-name" style="color:var(--green);">Vector Clocks</div>
+          <div class="axiom-eg">Each node maintains a logical clock. Used to detect and order concurrent updates. Helps resolve version conflicts without requiring a centralized timestamp.</div>
+        </div>
+        <div class="axiom-card">
+          <div class="axiom-name" style="color:var(--accent3);">Eventual Consistency</div>
+          <div class="axiom-eg">If no new updates are made, eventually all replicas will converge to the same value. Used by AP systems (availability + partition tolerance).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent1);">Redis — Most Important KV Store</div>
+      <p>Redis (Remote Dictionary Server) is an in-memory key-value store supporting multiple value types.</p>
+      <table class="tbl">
+        <tr><th>Data Type</th><th>Use Case</th><th>Example Command</th></tr>
+        <tr><td><strong>String</strong></td><td>Cache, counters, session tokens</td><td><code>SET user:1 "Alice"</code></td></tr>
+        <tr><td><strong>List</strong></td><td>Queues, recent items, logs</td><td><code>LPUSH mylist "item1"</code></td></tr>
+        <tr><td><strong>Set</strong></td><td>Tags, unique items, social graphs</td><td><code>SADD myset "member1"</code></td></tr>
+        <tr><td><strong>Sorted Set</strong></td><td>Leaderboards, rankings</td><td><code>ZADD leaderboard 100 "Alice"</code></td></tr>
+        <tr><td><strong>Hash</strong></td><td>Object storage (like a record)</td><td><code>HSET user:1 name "Alice" age 25</code></td></tr>
+      </table>
+      <div class="def-box">
+        <div class="def-label">Redis Persistence Options</div>
+        <strong>RDB (Redis Database):</strong> Periodic snapshots to disk (fast restart, possible data loss).<br>
+        <strong>AOF (Append-Only File):</strong> Logs every write command (slower but durable).<br>
+        <strong>Hybrid:</strong> Both RDB + AOF for best balance.
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent2);">Advantages &amp; Disadvantages</div>
+      <div class="axiom-grid">
+        <div class="axiom-card" style="border-color:rgba(74,222,128,0.4);">
+          <div class="axiom-name" style="color:var(--green);">Advantages</div>
+          <ul class="styled" style="padding-left:16px;margin-top:6px;">
+            <li>Extremely fast — O(1) lookups via hash</li>
+            <li>Simple data model — easy to use</li>
+            <li>Highly scalable — horizontal scaling</li>
+            <li>Schema-less — flexible value types</li>
+            <li>High availability via replication</li>
+            <li>In-memory = sub-millisecond latency</li>
+          </ul>
+        </div>
+        <div class="axiom-card" style="border-color:rgba(240,106,106,0.4);">
+          <div class="axiom-name" style="color:var(--accent4);">Disadvantages</div>
+          <ul class="styled" style="padding-left:16px;margin-top:6px;">
+            <li>No complex queries (no SQL JOIN, GROUP BY)</li>
+            <li>No relationships between keys</li>
+            <li>Not suitable for complex data models</li>
+            <li>Limited transaction support (no full ACID)</li>
+            <li>Secondary index support is limited</li>
+            <li>Memory cost for large datasets</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent3);">Use Cases for Key-Value Stores</div>
+      <div class="kv-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--accent1);margin-bottom:4px;">Session Management</div>
+          <div class="kv-desc">Store user session data (auth tokens) with TTL (time-to-live). Fast lookups per request.</div>
+        </div>
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--accent2);margin-bottom:4px;">Caching</div>
+          <div class="kv-desc">Cache DB query results, HTML fragments, API responses. Reduces DB load dramatically.</div>
+        </div>
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--accent3);margin-bottom:4px;">Real-time Leaderboards</div>
+          <div class="kv-desc">Redis Sorted Sets for instant rank lookups in games, apps.</div>
+        </div>
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--accent4);margin-bottom:4px;">Shopping Cart</div>
+          <div class="kv-desc">Cart data per user as a hash. Very fast add/remove items.</div>
+        </div>
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--accent5);margin-bottom:4px;">Pub/Sub Messaging</div>
+          <div class="kv-desc">Redis supports publish/subscribe pattern for real-time messaging.</div>
+        </div>
+        <div class="kv-card">
+          <div class="kv-desc" style="font-weight:700;color:var(--green);margin-bottom:4px;">Rate Limiting</div>
+          <div class="kv-desc">Count API requests per user using atomic increment with TTL.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:var(--bg3);margin:14px 0;">
+      <div class="card-title" style="color:var(--accent1);">KV Store vs Relational DB — Quick Comparison</div>
+      <table class="tbl">
+        <tr><th>Feature</th><th>Key-Value Store</th><th>Relational DB (SQL)</th></tr>
+        <tr><td>Data Model</td><td>Key → Value (any type)</td><td>Tables with rows &amp; columns</td></tr>
+        <tr><td>Schema</td><td>Schema-less (flexible)</td><td>Fixed schema (rigid)</td></tr>
+        <tr><td>Query Language</td><td>Simple GET/PUT/DELETE</td><td>Full SQL (JOIN, GROUP BY, etc.)</td></tr>
+        <tr><td>Transactions</td><td>Limited (often single key)</td><td>Full ACID transactions</td></tr>
+        <tr><td>Scalability</td><td>Horizontal (scale out)</td><td>Vertical (scale up, limited horizontal)</td></tr>
+        <tr><td>Speed</td><td>Sub-millisecond (in-memory)</td><td>Milliseconds (disk-based)</td></tr>
+        <tr><td>Relationships</td><td>Not supported natively</td><td>Foreign keys, JOINs</td></tr>
+        <tr><td>Best for</td><td>Caching, sessions, real-time</td><td>Complex queries, reporting, OLTP</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- BASE Properties -->
+  <div class="card">
+    <div class="card-title" style="color:var(--accent3);">BASE Properties (NoSQL's answer to ACID)</div>
+    <table class="tbl">
+      <tr><th>Property</th><th>Meaning</th></tr>
+      <tr>
+        <td><strong style="color:#f59e3a;">B</strong>asically Available</td>
+        <td>System guarantees availability — reads and writes always work, though possibly stale</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f59e3a;">S</strong>oft State</td>
+        <td>State of system may change over time even without input (due to eventual consistency)</td>
+      </tr>
+      <tr>
+        <td><strong style="color:#f59e3a;">E</strong>ventual Consistency</td>
+        <td>System will become consistent over time given no new updates — but not immediately</td>
+      </tr>
+    </table>
+    <div class="alert alert-tip">
+      <span class="alert-icon">✓</span>
+      <div><strong>Exam Note:</strong> ACID = SQL/Relational databases. BASE = NoSQL databases. They represent a trade-off: ACID prioritizes consistency; BASE prioritizes availability and performance.</div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER SUMMARY -->
+<div class="card" style="margin-top:48px;border-color:rgba(124,106,247,0.4);background:linear-gradient(135deg,rgba(124,106,247,0.08),rgba(13,15,20,0));">
+  <div class="card-title" style="color:var(--accent1);">📌 Quick Exam Cheat Sheet</div>
+  <table class="tbl">
+    <tr><th>Topic</th><th>Key Formula / Rule</th></tr>
+    <tr><td>FD X→Y holds?</td><td>Check: same X values must always have same Y values in the table</td></tr>
+    <tr><td>Trivial FD</td><td>Y ⊆ X (RHS is subset of LHS)</td></tr>
+    <tr><td>Closure X⁺</td><td>Start with X, apply FDs repeatedly until no change</td></tr>
+    <tr><td>Equivalence E≡F</td><td>E covers F AND F covers E (use closure to check)</td></tr>
+    <tr><td>Minimal Cover</td><td>Step 1: Single RHS → Step 2: Remove extra LHS → Step 3: Remove redundant FDs</td></tr>
+    <tr><td>CK check</td><td>X⁺ = all attributes AND no proper subset of X has X⁺ = all attributes</td></tr>
+    <tr><td>2NF violation</td><td>Proper subset of CK → NPA (partial dependency)</td></tr>
+    <tr><td>3NF violation</td><td>NPA → NPA (transitive) OR LHS not SK AND RHS not PA</td></tr>
+    <tr><td>BCNF violation</td><td>LHS of any non-trivial FD is NOT a super key</td></tr>
+    <tr><td>Lossless Join</td><td>R1∩R2 must be a superkey of R1 or R2</td></tr>
+    <tr><td>ACID vs BASE</td><td>SQL = ACID (consistent); NoSQL = BASE (available)</td></tr>
+    <tr><td>Lock compatibility</td><td>S+S: OK. S+X or X+X: Wait/Block</td></tr>
+    <tr><td>2PL guarantee</td><td>Ensures conflict serializability</td></tr>
+    <tr><td>KV Store ops</td><td>GET(key), PUT(key,val), DELETE(key) — O(1) via hashing</td></tr>
+    <tr><td>CAP Theorem</td><td>Pick 2 of 3: Consistency, Availability, Partition Tolerance</td></tr>
+    <tr><td>Quorum condition</td><td>R + W > N for strong consistency</td></tr>
+  </table>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
