@@ -1490,5 +1490,570 @@ N=3, W=3, R=1 → R+W=4 > 3 ✓ → Very strong but slow writes</code>
 </div>
 
 </div><!-- /container -->
+
+<!-- ═══════════════════════════════════════════════
+     FLOATING NOTES BUTTON + PANEL
+═══════════════════════════════════════════════ -->
+
+<!-- Floating trigger button -->
+<button id="notes-fab" onclick="toggleNotesPanel()" title="Open Notes">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+  </svg>
+  <span id="notes-count-badge"></span>
+</button>
+
+<!-- Notes side panel -->
+<div id="notes-overlay" onclick="closeIfOverlay(event)"></div>
+<div id="notes-panel">
+  <div id="notes-header">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#a599ff;flex-shrink:0"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      <span style="font-weight:700;font-size:16px;">My Notes</span>
+      <span id="notes-total-count" style="background:rgba(124,106,247,0.2);color:#a599ff;border:1px solid rgba(124,106,247,0.4);border-radius:20px;font-size:11px;font-weight:700;padding:2px 9px;"></span>
+    </div>
+    <button onclick="toggleNotesPanel()" id="notes-close-btn" title="Close">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  </div>
+
+  <!-- New note composer -->
+  <div id="notes-composer">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;">
+      <label style="font-size:12px;color:#9ca3c4;font-weight:600;white-space:nowrap;">Topic tag:</label>
+      <select id="note-topic-select">
+        <option value="General">General</option>
+        <option value="Functional Dependency">Functional Dependency</option>
+        <option value="Armstrong's Axioms">Armstrong's Axioms</option>
+        <option value="Closures">Closures</option>
+        <option value="Minimal Cover">Minimal Cover</option>
+        <option value="Normal Forms">Normal Forms</option>
+        <option value="Keys">Keys</option>
+        <option value="Decomposition">Decomposition</option>
+        <option value="Transactions">Transactions</option>
+        <option value="Locking">Locking</option>
+        <option value="Key-Value Store">Key-Value Store</option>
+        <option value="Exam Tips">Exam Tips</option>
+      </select>
+    </div>
+    <textarea id="note-input" placeholder="Write your note here… (Ctrl+Enter to save)" rows="4"></textarea>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="notes-btn notes-btn-primary" onclick="saveNote()">Save Note</button>
+      <button class="notes-btn notes-btn-ghost" onclick="clearComposer()">Clear</button>
+    </div>
+  </div>
+
+  <!-- Filter bar -->
+  <div id="notes-filter-bar">
+    <span style="font-size:12px;color:#9ca3c4;font-weight:600;">Filter:</span>
+    <div id="filter-pills-container"></div>
+  </div>
+
+  <!-- Notes list -->
+  <div id="notes-list-container">
+    <div id="notes-list"></div>
+    <div id="notes-empty" style="display:none;">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5d6490" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:10px;"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      <p style="color:#5d6490;font-size:14px;">No notes yet.<br>Write your first one above!</p>
+    </div>
+  </div>
+</div>
+
+<style>
+/* FAB BUTTON */
+#notes-fab {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7c6af7, #5b4fd4);
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 24px rgba(124,106,247,0.45);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 900;
+}
+#notes-fab:hover { transform: scale(1.08); box-shadow: 0 6px 32px rgba(124,106,247,0.6); }
+#notes-fab:active { transform: scale(0.96); }
+#notes-count-badge {
+  position: absolute;
+  top: -3px; right: -3px;
+  background: #f06a6a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 2px solid #0d0f14;
+}
+
+/* OVERLAY */
+#notes-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 950;
+  backdrop-filter: blur(2px);
+}
+
+/* PANEL */
+#notes-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 400px;
+  max-width: 95vw;
+  height: 100vh;
+  background: #13161e;
+  border-left: 1px solid #2d3350;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(110%);
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  overflow: hidden;
+}
+#notes-panel.open { transform: translateX(0); }
+#notes-overlay.open { display: block; }
+
+/* PANEL HEADER */
+#notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid #2d3350;
+  background: #1a1e2a;
+  flex-shrink: 0;
+}
+#notes-close-btn {
+  background: none;
+  border: none;
+  color: #9ca3c4;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+#notes-close-btn:hover { background: rgba(255,255,255,0.08); color: #e8eaf6; }
+
+/* COMPOSER */
+#notes-composer {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d3350;
+  background: #1a1e2a;
+  flex-shrink: 0;
+}
+#note-topic-select {
+  flex: 1;
+  background: #242840;
+  border: 1px solid #2d3350;
+  color: #e8eaf6;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+}
+#note-topic-select:focus { outline: none; border-color: #7c6af7; }
+#note-input {
+  width: 100%;
+  background: #242840;
+  border: 1px solid #2d3350;
+  color: #e8eaf6;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  resize: vertical;
+  font-family: 'Sora', sans-serif;
+  line-height: 1.6;
+  min-height: 80px;
+  transition: border-color 0.15s;
+}
+#note-input:focus { outline: none; border-color: #7c6af7; }
+#note-input::placeholder { color: #5d6490; }
+.notes-btn {
+  padding: 8px 16px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Sora', sans-serif;
+  transition: all 0.15s;
+}
+.notes-btn-primary {
+  background: #7c6af7;
+  border: none;
+  color: #fff;
+}
+.notes-btn-primary:hover { background: #6b59e6; }
+.notes-btn-ghost {
+  background: transparent;
+  border: 1px solid #2d3350;
+  color: #9ca3c4;
+}
+.notes-btn-ghost:hover { background: rgba(255,255,255,0.05); color: #e8eaf6; }
+
+/* FILTER BAR */
+#notes-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #2d3350;
+  flex-shrink: 0;
+  overflow-x: auto;
+  background: #13161e;
+}
+#notes-filter-bar::-webkit-scrollbar { display: none; }
+#filter-pills-container {
+  display: flex;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+.filter-pill {
+  padding: 3px 11px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid #2d3350;
+  background: transparent;
+  color: #9ca3c4;
+  white-space: nowrap;
+  font-family: 'Sora', sans-serif;
+  transition: all 0.15s;
+}
+.filter-pill:hover { border-color: #7c6af7; color: #a599ff; }
+.filter-pill.active { background: rgba(124,106,247,0.2); border-color: #7c6af7; color: #a599ff; }
+
+/* NOTES LIST */
+#notes-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 20px;
+  scrollbar-width: thin;
+  scrollbar-color: #2d3350 transparent;
+}
+#notes-list-container::-webkit-scrollbar { width: 4px; }
+#notes-list-container::-webkit-scrollbar-track { background: transparent; }
+#notes-list-container::-webkit-scrollbar-thumb { background: #2d3350; border-radius: 2px; }
+#notes-empty {
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* INDIVIDUAL NOTE CARD */
+.note-card {
+  background: #1e2232;
+  border: 1px solid #2d3350;
+  border-radius: 10px;
+  padding: 13px 15px;
+  margin-bottom: 12px;
+  transition: border-color 0.15s;
+  position: relative;
+}
+.note-card:hover { border-color: #3d4570; }
+.note-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.note-topic-tag {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(124,106,247,0.15);
+  color: #a599ff;
+  border: 1px solid rgba(124,106,247,0.3);
+}
+.note-actions { display: flex; gap: 4px; }
+.note-action-btn {
+  background: none;
+  border: none;
+  color: #5d6490;
+  cursor: pointer;
+  padding: 3px 5px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  transition: color 0.15s, background 0.15s;
+}
+.note-action-btn:hover { color: #e8eaf6; background: rgba(255,255,255,0.07); }
+.note-action-btn.del:hover { color: #f06a6a; }
+.note-body {
+  font-size: 13.5px;
+  color: #c8cae0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.note-body-edit {
+  width: 100%;
+  background: #242840;
+  border: 1px solid #7c6af7;
+  color: #e8eaf6;
+  font-size: 13.5px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-family: 'Sora', sans-serif;
+  resize: vertical;
+  line-height: 1.65;
+  min-height: 60px;
+}
+.note-body-edit:focus { outline: none; }
+.note-edit-actions { display:flex; gap:6px; margin-top:8px; }
+.note-date {
+  font-size: 11px;
+  color: #5d6490;
+  margin-top: 8px;
+}
+</style>
+
+<script>
+const STORAGE_KEY = 'dbms_study_notes_v1';
+let notes = [];
+let activeFilter = 'All';
+
+// ── LOAD FROM LOCALSTORAGE ──
+function loadNotes() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    notes = raw ? JSON.parse(raw) : [];
+  } catch(e) { notes = []; }
+}
+
+// ── SAVE TO LOCALSTORAGE ──
+function persistNotes() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+}
+
+// ── SAVE A NEW NOTE ──
+function saveNote() {
+  const text = document.getElementById('note-input').value.trim();
+  if (!text) {
+    document.getElementById('note-input').focus();
+    return;
+  }
+  const topic = document.getElementById('note-topic-select').value;
+  const note = {
+    id: Date.now().toString(),
+    topic,
+    text,
+    created: new Date().toISOString()
+  };
+  notes.unshift(note);
+  persistNotes();
+  clearComposer();
+  renderNotes();
+  updateBadge();
+}
+
+// ── CLEAR COMPOSER ──
+function clearComposer() {
+  document.getElementById('note-input').value = '';
+  document.getElementById('note-input').focus();
+}
+
+// ── DELETE A NOTE ──
+function deleteNote(id) {
+  notes = notes.filter(n => n.id !== id);
+  persistNotes();
+  renderNotes();
+  updateBadge();
+}
+
+// ── START EDITING ──
+function startEdit(id) {
+  const note = notes.find(n => n.id === id);
+  if (!note) return;
+  const card = document.getElementById('note-' + id);
+  const bodyEl = card.querySelector('.note-body');
+  bodyEl.style.display = 'none';
+  // remove any existing edit area
+  const existing = card.querySelector('.note-body-edit');
+  if (existing) existing.remove();
+  const existingActions = card.querySelector('.note-edit-actions');
+  if (existingActions) existingActions.remove();
+
+  const ta = document.createElement('textarea');
+  ta.className = 'note-body-edit';
+  ta.value = note.text;
+  card.insertBefore(ta, card.querySelector('.note-date'));
+  ta.focus();
+  ta.setSelectionRange(ta.value.length, ta.value.length);
+
+  const actions = document.createElement('div');
+  actions.className = 'note-edit-actions';
+  actions.innerHTML = `
+    <button class="notes-btn notes-btn-primary" style="font-size:12px;padding:6px 12px;" onclick="commitEdit('${id}')">Save</button>
+    <button class="notes-btn notes-btn-ghost" style="font-size:12px;padding:6px 12px;" onclick="cancelEdit('${id}')">Cancel</button>
+  `;
+  card.insertBefore(actions, card.querySelector('.note-date'));
+
+  ta.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) commitEdit(id);
+    if (e.key === 'Escape') cancelEdit(id);
+  });
+}
+
+// ── COMMIT EDIT ──
+function commitEdit(id) {
+  const card = document.getElementById('note-' + id);
+  const ta = card.querySelector('.note-body-edit');
+  const newText = ta ? ta.value.trim() : '';
+  if (!newText) return;
+  const note = notes.find(n => n.id === id);
+  if (note) {
+    note.text = newText;
+    note.edited = new Date().toISOString();
+    persistNotes();
+  }
+  renderNotes();
+}
+
+// ── CANCEL EDIT ──
+function cancelEdit(id) {
+  const card = document.getElementById('note-' + id);
+  if (!card) return;
+  const bodyEl = card.querySelector('.note-body');
+  if (bodyEl) bodyEl.style.display = '';
+  const ta = card.querySelector('.note-body-edit');
+  if (ta) ta.remove();
+  const actions = card.querySelector('.note-edit-actions');
+  if (actions) actions.remove();
+}
+
+// ── FORMAT DATE ──
+function formatDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+    + ' · ' + d.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit' });
+}
+
+// ── RENDER FILTER PILLS ──
+function renderFilterPills() {
+  const topics = ['All', ...Array.from(new Set(notes.map(n => n.topic)))];
+  const container = document.getElementById('filter-pills-container');
+  container.innerHTML = topics.map(t => `
+    <button class="filter-pill ${activeFilter === t ? 'active' : ''}" onclick="setFilter('${t}')">${t}</button>
+  `).join('');
+}
+
+// ── SET FILTER ──
+function setFilter(topic) {
+  activeFilter = topic;
+  renderNotes();
+}
+
+// ── RENDER NOTES LIST ──
+function renderNotes() {
+  renderFilterPills();
+  const filtered = activeFilter === 'All' ? notes : notes.filter(n => n.topic === activeFilter);
+  const list = document.getElementById('notes-list');
+  const empty = document.getElementById('notes-empty');
+  const totalCount = document.getElementById('notes-total-count');
+  totalCount.textContent = notes.length + ' note' + (notes.length !== 1 ? 's' : '');
+
+  if (filtered.length === 0) {
+    list.innerHTML = '';
+    empty.style.display = 'flex';
+    return;
+  }
+  empty.style.display = 'none';
+  list.innerHTML = filtered.map(note => `
+    <div class="note-card" id="note-${note.id}">
+      <div class="note-card-header">
+        <span class="note-topic-tag">${note.topic}</span>
+        <div class="note-actions">
+          <button class="note-action-btn" onclick="startEdit('${note.id}')" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="note-action-btn del" onclick="deleteNote('${note.id}')" title="Delete">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="note-body">${escapeHtml(note.text)}</div>
+      <div class="note-date">${formatDate(note.created)}${note.edited ? ' · edited' : ''}</div>
+    </div>
+  `).join('');
+}
+
+// ── ESCAPE HTML ──
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── UPDATE FAB BADGE ──
+function updateBadge() {
+  const badge = document.getElementById('notes-count-badge');
+  if (notes.length > 0) {
+    badge.style.display = 'flex';
+    badge.textContent = notes.length > 99 ? '99+' : notes.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+// ── TOGGLE PANEL ──
+function toggleNotesPanel() {
+  const panel = document.getElementById('notes-panel');
+  const overlay = document.getElementById('notes-overlay');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+  } else {
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    renderNotes();
+    setTimeout(() => document.getElementById('note-input').focus(), 320);
+  }
+}
+
+// ── CLOSE ON OVERLAY CLICK ──
+function closeIfOverlay(e) {
+  if (e.target.id === 'notes-overlay') toggleNotesPanel();
+}
+
+// ── CTRL+ENTER TO SAVE ──
+document.addEventListener('DOMContentLoaded', function() {
+  loadNotes();
+  updateBadge();
+
+  document.getElementById('note-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); saveNote(); }
+  });
+
+  // Keyboard shortcut: N to open notes panel
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'n' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'SELECT') {
+      toggleNotesPanel();
+    }
+  });
+});
+</script>
 </body>
 </html>
